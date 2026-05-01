@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculy | Grade calculator</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* additional style for the title on start overlay */
+    .start-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3rem, 10vw, 6rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #111;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      animation: fadeUp 0.6s ease forwards;
+    }
+    .start-overlay {
+      flex-direction: column;
+    }
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- START OVERLAY with title -->
+  <div id="startOverlay" class="start-overlay">
+    <div class="start-title">Calculy</div>
+    <button id="startBtn" class="start-button">START</button>
+  </div>
+
+  <!-- MAIN CONTENT: GRADE CALCULATOR -->
+  <div id="mainContent" class="main-content hidden">
+    <div class="container">
+      <header class="header">
+        <div class="logo">/calculy</div>
+        <nav class="nav">
+          <a href="#">feedback</a>
+        </nav>
+      </header>
+
+      <div class="calculator-container" id="app">
+        <!-- subjects will be injected here -->
+      </div>
+
+      <footer class="footer">
+        <div class="footer-links">
+            <a href="">Github</a>
+        </div>
+        <p class="copyright">automatically calculates weighted grades</p>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // ---------- DATA MODEL ----------
+    let subjects = [];
+
+    function uid() {
+      return Date.now() + '-' + Math.random().toString(36).substr(2, 6);
+    }
+
+    // Define which component types are "multi-instance" (can have best Y/X and multiple rows)
+    const multiInstanceTypes = ['Lab Test', 'Quiz', 'Assignment', 'In-class Assignment', 'Lab Tasks'];
+    const singleInstanceTypes = ['Project', 'Midterm'];
+
+    const typesMeta = {
+      'Project': { defaultMax: 100 },
+      'Midterm': { defaultMax: 100 },
+      'Lab Test': { defaultMax: 100 },
+      'Quiz': { defaultMax: 10 },
+      'Assignment': { defaultMax: 100 },
+      'In-class Assignment': { defaultMax: 100 },
+      'Lab Tasks': { defaultMax: 100 }
+    };
+
+    function createEmptySubject() {
+      return {
+        id: uid(),
+        name: '',
+        components: []
+      };
+    }
+
+    function createComponent(type) {
+      const meta = typesMeta[type];
+      const isMulti = multiInstanceTypes.includes(type);
+      
+      if (isMulti) {
+        return {
+          id: uid(),
+          type: type,
+          weight: 0,
+          bestY: null,
+          bestX: null,
+          instances: [{ id: uid(), score: 0, max: meta.defaultMax }]
+        };
+      } else {
+        // single instance (Project, Midterm)
+        return {
+          id: uid(),
+          type: type,
+          weight: 0,
+          score: 0,
+          maxPoints: meta.defaultMax
+        };
+      }
+    }
+
+    // calculate component grade (0-100)
+    function computeComponentGrade(comp) {
+      const isMulti = multiInstanceTypes.includes(comp.type);
+      
+      if (!isMulti) {
+        // single instance: score / maxPoints
+        if (comp.maxPoints === 0) return 0;
+        return (comp.score / comp.maxPoints) * 100;
+      } else {
+        // multiple instances
+        let percentages = comp.instances.map(inst => {
+          if (inst.max === 0) return 0;
+          return (inst.score / inst.max) * 100;
+        });
+        
+        if (comp.bestY && comp.bestX && comp.bestY > 0 && comp.bestX >= comp.bestY) {
+          const sorted = [...percentages].sort((a, b) => b - a);
+          const top = sorted.slice(0, comp.bestY);
+          if (top.length === 0) return 0;
+          return top.reduce((a, b) => a + b, 0) / top.length;
+        } else {
+          if (percentages.length === 0) return 0;
+          return percentages.reduce((a, b) => a + b, 0) / percentages.length;
+        }
+      }
+    }
+
+    function computeSubjectGrade(subject) {
+      let total = 0;
+      let totalWeight = 0;
+      for (let comp of subject.components) {
+        const grade = computeComponentGrade(comp);
+        total += grade * (comp.weight / 100);
+        totalWeight += comp.weight;
+      }
+      if (totalWeight === 0) return 0;
+      return (total / totalWeight) * 100;
+    }
+
+    // ---------- RENDER UI ----------
+    function renderApp() {
+      const container = document.getElementById('app');
+      if (!container) return;
+      container.innerHTML = '';
+      
+      subjects.forEach((subject) => {
+        const card = document.createElement('div');
+        card.className = 'subject-card';
+        card.dataset.id = subject.id;
+
+        // header
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'subject-header';
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.value = subject.name;
+        nameInput.placeholder = '';
+        nameInput.className = 'subject-title';
+        nameInput.addEventListener('change', (e) => {
+          subject.name = e.target.value;
+          renderApp();
+        });
+        const removeBtn = document.createElement('button');
+        removeBtn.innerHTML = '✕';
+        removeBtn.className = 'remove-subject';
+        removeBtn.addEventListener('click', () => {
+          subjects = subjects.filter(s => s.id !== subject.id);
+          renderApp();
+        });
+        headerDiv.appendChild(nameInput);
+        headerDiv.appendChild(removeBtn);
+        card.appendChild(headerDiv);
+
+        // components list
+        const compList = document.createElement('div');
+        compList.className = 'components-list';
+        
+        subject.components.forEach(comp => {
+          const compDiv = document.createElement('div');
+          compDiv.className = 'component-item';
+          
+          const innerHeader = document.createElement('div');
+          innerHeader.className = 'component-header';
+          const typeSpan = document.createElement('span');
+          typeSpan.className = 'component-type';
+          typeSpan.innerText = comp.type;
+          const weightInput = document.createElement('input');
+          weightInput.type = 'number';
+          weightInput.step = '0.1';
+          weightInput.value = comp.weight;
+          weightInput.className = 'component-weight';
+          weightInput.addEventListener('change', (e) => {
+            comp.weight = parseFloat(e.target.value) || 0;
+            renderApp();
+          });
+          innerHeader.appendChild(typeSpan);
+          innerHeader.appendChild(weightInput);
+          
+          const isMulti = multiInstanceTypes.includes(comp.type);
+          
+          // best rule only for multi-instance types
+          if (isMulti) {
+            const bestDiv = document.createElement('div');
+            bestDiv.className = 'best-rule';
+            bestDiv.innerHTML = `
+              <span>best</span>
+              <input type="number" id="bestY-${comp.id}" placeholder=" " step="1" min="1" style="width:55px">
+              <span>out of</span>
+              <input type="number" id="bestX-${comp.id}" placeholder=" " step="1" min="1" style="width:55px">
+            `;
+            const yInp = bestDiv.querySelector(`#bestY-${comp.id}`);
+            const xInp = bestDiv.querySelector(`#bestX-${comp.id}`);
+            if (comp.bestY) yInp.value = comp.bestY;
+            if (comp.bestX) xInp.value = comp.bestX;
+            yInp.addEventListener('change', (e) => {
+              comp.bestY = parseInt(e.target.value) || null;
+              renderApp();
+            });
+            xInp.addEventListener('change', (e) => {
+              comp.bestX = parseInt(e.target.value) || null;
+              renderApp();
+            });
+            innerHeader.appendChild(bestDiv);
+          }
+          compDiv.appendChild(innerHeader);
+          
+          const instancesArea = document.createElement('div');
+          instancesArea.className = 'instances-area';
+          
+          if (isMulti) {
+            // multiple instances: show each with remove button
+            comp.instances.forEach((inst, idxInst) => {
+              const row = document.createElement('div');
+              row.className = 'instance-row';
+              row.innerHTML = `
+                <span class="instance-label">#${idxInst+1}</span>
+                <input type="number" step="any" class="instance-score" placeholder=" " value="${inst.score}">
+                <span>/</span>
+                <input type="number" step="any" class="instance-max" placeholder=" " value="${inst.max}">
+                <button class="btn-small remove-instance" data-id="${inst.id}">✕</button>
+              `;
+              const scoreInp = row.querySelector('.instance-score');
+              const maxInp = row.querySelector('.instance-max');
+              scoreInp.addEventListener('change', (e) => {
+                inst.score = parseFloat(e.target.value) || 0;
+                renderApp();
+              });
+              maxInp.addEventListener('change', (e) => {
+                inst.max = parseFloat(e.target.value) || 1;
+                renderApp();
+              });
+              const rmBtn = row.querySelector('.remove-instance');
+              rmBtn.addEventListener('click', () => {
+                comp.instances = comp.instances.filter(i => i.id !== inst.id);
+                if (comp.instances.length === 0) {
+                  comp.instances.push({ id: uid(), score: 0, max: typesMeta[comp.type].defaultMax });
+                }
+                renderApp();
+              });
+              instancesArea.appendChild(row);
+            });
+            const addInstBtn = document.createElement('button');
+            addInstBtn.innerText = '+ add instance';
+            addInstBtn.className = 'add-instance';
+            addInstBtn.addEventListener('click', () => {
+              comp.instances.push({ id: uid(), score: 0, max: typesMeta[comp.type].defaultMax });
+              renderApp();
+            });
+            instancesArea.appendChild(addInstBtn);
+          } else {
+            // single instance: just one score/max field, no best rule, no add/remove
+            const row = document.createElement('div');
+            row.className = 'instance-row';
+            row.innerHTML = `
+              <span class="instance-label">score</span>
+              <input type="number" step="any" class="single-score" placeholder=" " value="${comp.score}">
+              <span>/</span>
+              <input type="number" step="any" class="single-max" placeholder=" " value="${comp.maxPoints}">
+            `;
+            const scoreInp = row.querySelector('.single-score');
+            const maxInp = row.querySelector('.single-max');
+            scoreInp.addEventListener('change', (e) => {
+              comp.score = parseFloat(e.target.value) || 0;
+              renderApp();
+            });
+            maxInp.addEventListener('change', (e) => {
+              comp.maxPoints = parseFloat(e.target.value) || 1;
+              renderApp();
+            });
+            instancesArea.appendChild(row);
+          }
+          compDiv.appendChild(instancesArea);
+          
+          // remove component button (always available)
+          const actions = document.createElement('div');
+          actions.className = 'component-actions';
+          const rmComp = document.createElement('button');
+          rmComp.innerText = 'remove component';
+          rmComp.className = 'btn-small';
+          rmComp.addEventListener('click', () => {
+            subject.components = subject.components.filter(c => c.id !== comp.id);
+            renderApp();
+          });
+          actions.appendChild(rmComp);
+          compDiv.appendChild(actions);
+          compList.appendChild(compDiv);
+        });
+        card.appendChild(compList);
+        
+        // add component dropdown
+        const addCompDiv = document.createElement('div');
+        addCompDiv.style.margin = '0.8rem 0';
+        const typeSelect = document.createElement('select');
+        const allTypes = [...singleInstanceTypes, ...multiInstanceTypes];
+        allTypes.forEach(opt => {
+          const option = document.createElement('option');
+          option.value = opt;
+          option.innerText = opt;
+          typeSelect.appendChild(option);
+        });
+        const addCompBtn = document.createElement('button');
+        addCompBtn.innerText = '+ add component';
+        addCompBtn.className = 'add-instance';
+        addCompBtn.style.marginLeft = '0.5rem';
+        addCompBtn.addEventListener('click', () => {
+          const newType = typeSelect.value;
+          const newComp = createComponent(newType);
+          subject.components.push(newComp);
+          renderApp();
+        });
+        addCompDiv.appendChild(typeSelect);
+        addCompDiv.appendChild(addCompBtn);
+        card.appendChild(addCompDiv);
+        
+        // grade display
+        const grade = computeSubjectGrade(subject);
+        const totalWeightSum = subject.components.reduce((sum, c) => sum + c.weight, 0);
+        const gradeDisplay = document.createElement('div');
+        gradeDisplay.className = 'grade-display';
+        gradeDisplay.innerHTML = `<strong>Grade: ${grade.toFixed(2)}%</strong> 
+          <span style="font-size:0.75rem; margin-left:1rem;">weights sum: ${totalWeightSum}%</span>`;
+        if (Math.abs(totalWeightSum - 100) > 0.01 && totalWeightSum > 0) {
+          const warn = document.createElement('div');
+          warn.className = 'warning';
+          warn.innerText = 'total weight for this subject is not 100% – grade may be inaccurate.';
+          gradeDisplay.appendChild(warn);
+        }
+        card.appendChild(gradeDisplay);
+        container.appendChild(card);
+      });
+      
+      // add subject button
+      const addSubjectBtn = document.createElement('button');
+      addSubjectBtn.innerText = '+ add subject';
+      addSubjectBtn.className = 'add-subject-btn';
+      addSubjectBtn.addEventListener('click', () => {
+        const newSubj = createEmptySubject();
+        subjects.push(newSubj);
+        renderApp();
+      });
+      container.appendChild(addSubjectBtn);
+    }
+
+    // start overlay
+    const overlay = document.getElementById('startOverlay');
+    const mainContent = document.getElementById('mainContent');
+    const startBtn = document.getElementById('startBtn');
+    startBtn.addEventListener('click', () => {
+      overlay.classList.add('slide-down');
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        mainContent.classList.remove('hidden');
+        mainContent.classList.add('slide-in');
+        setTimeout(() => {
+          mainContent.classList.remove('slide-in');
+        }, 800);
+        subjects = [];
+        renderApp();
+      }, 600);
+    });
+  </script>
+</body>
+</html>
