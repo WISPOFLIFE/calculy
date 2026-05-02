@@ -1,37 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="icon" type="image/png" href="favicon.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calculy | Grade calculator</title>
+  <title>Calculy | grade calculator</title>
+  <link rel="icon" type="image/png" href="logo.png">
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
   <style>
-    /* additional style for the title on start overlay */
-    .start-title {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(3rem, 10vw, 6rem);
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      color: #111;
-      margin-bottom: 1.5rem;
-      text-align: center;
-      animation: fadeUp 0.6s ease forwards;
-    }
-    .start-overlay {
-      flex-direction: column;
-    }
-    @keyframes fadeUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+
   </style>
 </head>
 <body>
@@ -39,26 +18,27 @@
   <!-- START OVERLAY with title -->
   <div id="startOverlay" class="start-overlay">
     <div class="start-title">Calculy</div>
-    <button id="startBtn" class="start-button">START</button>
+    <div class="start-subtitle">Calculate how much you need in your final</div>
+    <button id="startBtn" class="start-button">Start.</button>
   </div>
 
   <!-- MAIN CONTENT: GRADE CALCULATOR -->
   <div id="mainContent" class="main-content hidden">
     <div class="container">
       <header class="header">
-        <div class="logo">/calculy</div>
+        <div class="logo">/calculy</div>  
         <nav class="nav">
           <a href="#">feedback</a>
         </nav>
       </header>
 
       <div class="calculator-container" id="app">
-        <!-- subjects will be injected here -->
+
       </div>
 
       <footer class="footer">
         <div class="footer-links">
-            <a href="">Github</a>
+          <a href=></a>
         </div>
         <p class="copyright">automatically calculates weighted grades</p>
       </footer>
@@ -74,17 +54,17 @@
     }
 
     // Define which component types are "multi-instance" (can have best Y/X and multiple rows)
-    const multiInstanceTypes = ['Lab Test', 'Quiz', 'Assignment', 'In-class Assignment', 'Lab Tasks'];
+    const multiInstanceTypes = ['Lab Test', 'Lab Tasks', 'Quiz', 'Assignment', 'Inclass Assignment'];
     const singleInstanceTypes = ['Project', 'Midterm'];
 
     const typesMeta = {
       'Project': { defaultMax: 100 },
       'Midterm': { defaultMax: 100 },
       'Lab Test': { defaultMax: 100 },
+      'Lab Tasks': { defaultMax: 100 },
       'Quiz': { defaultMax: 10 },
       'Assignment': { defaultMax: 100 },
-      'In-class Assignment': { defaultMax: 100 },
-      'Lab Tasks': { defaultMax: 100 }
+      'Inclass Assignment': { defaultMax: 20 }
     };
 
     function createEmptySubject() {
@@ -109,7 +89,6 @@
           instances: [{ id: uid(), score: 0, max: meta.defaultMax }]
         };
       } else {
-        // single instance (Project, Midterm)
         return {
           id: uid(),
           type: type,
@@ -120,7 +99,6 @@
       }
     }
 
-    // calculate component grade (0-100)
     function computeComponentGrade(comp) {
       const isMulti = multiInstanceTypes.includes(comp.type);
       
@@ -157,6 +135,19 @@
       }
       if (totalWeight === 0) return 0;
       return (total / totalWeight) * 100;
+    }
+
+    // ---------- PERSISTENCE ----------
+    function saveToLocalStorage() {
+      localStorage.setItem('calculy_subjects', JSON.stringify(subjects));
+    }
+
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem('calculy_subjects');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      return null;
     }
 
     // ---------- RENDER UI ----------
@@ -329,10 +320,10 @@
         });
         card.appendChild(compList);
         
-        // add component dropdown
         const addCompDiv = document.createElement('div');
         addCompDiv.style.margin = '0.8rem 0';
         const typeSelect = document.createElement('select');
+        typeSelect.className = 'component-type-select';  // styled class
         const allTypes = [...singleInstanceTypes, ...multiInstanceTypes];
         allTypes.forEach(opt => {
           const option = document.createElement('option');
@@ -381,13 +372,25 @@
         renderApp();
       });
       container.appendChild(addSubjectBtn);
+      
+      // Save to localStorage after every render
+      saveToLocalStorage();
     }
 
-    // start overlay
+    // start overlay with persistence
     const overlay = document.getElementById('startOverlay');
     const mainContent = document.getElementById('mainContent');
     const startBtn = document.getElementById('startBtn');
+    
     startBtn.addEventListener('click', () => {
+      // Load saved subjects from localStorage (if any) before showing main content
+      const savedSubjects = loadFromLocalStorage();
+      if (savedSubjects && Array.isArray(savedSubjects)) {
+        subjects = savedSubjects;
+      } else {
+        subjects = [];
+      }
+      
       overlay.classList.add('slide-down');
       setTimeout(() => {
         overlay.style.display = 'none';
@@ -396,7 +399,6 @@
         setTimeout(() => {
           mainContent.classList.remove('slide-in');
         }, 800);
-        subjects = [];
         renderApp();
       }, 600);
     });
