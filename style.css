@@ -12,8 +12,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ========== MINIMAL BACKGROUND ANIMATION (MORE APPARENT) ========== */
-/* Soft moving gradient - now with higher opacity and smoother transition */
 body::before {
   content: '';
   position: fixed;
@@ -39,7 +37,6 @@ body::before {
   }
 }
 
-/* Floating particles - more visible, slightly larger, and with a soft glow */
 body::after {
   content: '';
   position: fixed;
@@ -63,7 +60,7 @@ body::after {
   }
 }
 
-/* additional subtle moving light sweep (barely there but adds life) */
+
 .light-sweep {
   position: fixed;
   top: 0;
@@ -85,14 +82,7 @@ body::after {
   100% { background-position: -100% 0%; }
 }
 
-/* add the light-sweep element to the DOM (we'll inject it via CSS pseudo-element?) 
-   Actually let's add it as an extra div via HTML for simplicity. But to keep minimal, I'll use a pseudo-element. 
-   Wait, body can only have one ::before and one ::after. So we'll combine or use an extra div in HTML.
-   I'll add a new div in the HTML for the sweep? Better to keep HTML unchanged. Let's merge into body::before animation.
-   Instead, I'll enhance the existing gradient animation to include a sweeping light effect. */
-/* I'll modify the existing ::before to include a moving light component via multiple gradients. */
 
-/* Improved version: single pseudo-element but with moving highlight */
 body::before {
   content: '';
   position: fixed;
@@ -106,9 +96,7 @@ body::before {
   pointer-events: none;
 }
 
-/* Add a second independent background animation using a separate element (no extra HTML needed) 
-   We'll use a `::after` on a wrapper? But body is fine. Actually we can use an extra div injected via JavaScript? 
-   Simpler: I'll enhance the floating particles to also have a subtle glowing pulse. */
+
 
 body::after {
   content: '';
@@ -435,7 +423,7 @@ h1 {
   }
 }
 
-/* extra styles for grade calculator – extends minimal design */
+
     .calculator-container {
       max-width: 1200px;
       margin: 2rem auto;
@@ -620,7 +608,7 @@ h1 {
       }
     }
 
-    /* additional style for the title on start overlay */
+
     .start-title {
       font-family: 'Playfair Display', serif;
       font-size: clamp(3rem, 10vw, 6rem);
