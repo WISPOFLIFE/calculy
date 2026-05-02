@@ -15,14 +15,14 @@
 </head>
 <body>
 
-  <!-- START OVERLAY with title -->
+  <!-- start overlay -->
   <div id="startOverlay" class="start-overlay">
     <div class="start-title">Calculy</div>
     <div class="start-subtitle">Calculate how much you need in your final</div>
     <button id="startBtn" class="start-button">Start.</button>
   </div>
 
-  <!-- MAIN CONTENT: GRADE CALCULATOR -->
+  <!-- grade calc -->
   <div id="mainContent" class="main-content hidden">
     <div class="container">
       <header class="header">
@@ -46,14 +46,14 @@
   </div>
 
   <script>
-    // ---------- DATA MODEL ----------
+    
     let subjects = [];
 
     function uid() {
       return Date.now() + '-' + Math.random().toString(36).substr(2, 6);
     }
 
-    // Define which component types are "multi-instance" (can have best Y/X and multiple rows)
+    
     const multiInstanceTypes = ['Lab Test', 'Lab Tasks', 'Quiz', 'Assignment', 'Inclass Assignment'];
     const singleInstanceTypes = ['Project', 'Midterm'];
 
@@ -103,7 +103,7 @@
       const isMulti = multiInstanceTypes.includes(comp.type);
       
       if (!isMulti) {
-        // single instance: score / maxPoints
+        // single instance
         if (comp.maxPoints === 0) return 0;
         return (comp.score / comp.maxPoints) * 100;
       } else {
@@ -137,7 +137,7 @@
       return (total / totalWeight) * 100;
     }
 
-    // ---------- PERSISTENCE ----------
+    // local cache
     function saveToLocalStorage() {
       localStorage.setItem('calculy_subjects', JSON.stringify(subjects));
     }
@@ -150,7 +150,7 @@
       return null;
     }
 
-    // ---------- RENDER UI ----------
+    // render ui
     function renderApp() {
       const container = document.getElementById('app');
       if (!container) return;
@@ -211,7 +211,7 @@
           
           const isMulti = multiInstanceTypes.includes(comp.type);
           
-          // best rule only for multi-instance types
+          
           if (isMulti) {
             const bestDiv = document.createElement('div');
             bestDiv.className = 'best-rule';
@@ -241,7 +241,7 @@
           instancesArea.className = 'instances-area';
           
           if (isMulti) {
-            // multiple instances: show each with remove button
+            // multiple instances
             comp.instances.forEach((inst, idxInst) => {
               const row = document.createElement('div');
               row.className = 'instance-row';
@@ -281,7 +281,7 @@
             });
             instancesArea.appendChild(addInstBtn);
           } else {
-            // single instance: just one score/max field, no best rule, no add/remove
+            // single instance
             const row = document.createElement('div');
             row.className = 'instance-row';
             row.innerHTML = `
@@ -304,7 +304,7 @@
           }
           compDiv.appendChild(instancesArea);
           
-          // remove component button (always available)
+          // remove component button
           const actions = document.createElement('div');
           actions.className = 'component-actions';
           const rmComp = document.createElement('button');
