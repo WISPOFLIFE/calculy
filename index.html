@@ -169,7 +169,7 @@
       return (total / totalWeight) * 100;
     }
 
-    function calculateFinalRequirements(subject) {
+        function calculateFinalRequirements(subject) {
       let totalWeight = 0;
       let weightedSum = 0;
       for (let comp of subject.components) {
@@ -183,7 +183,7 @@
       const requiredScores = [];
       for (let grade of gradeBoundaries) {
         const target = grade.min;
-        const required = (target - (weightedSum / (totalWeight / 100))) * (totalWeight / remainingWeight);
+        const required = (target - weightedSum) * (100 / remainingWeight);
         let display, className;
         if (required > 100) {
           display = '-';
