@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" type="image/png" href="favicon.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calculy | grade calculator</title>
@@ -9,51 +8,86 @@
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-
+    .final-requirements {
+      margin-top: 0.8rem;
+      padding: 0.8rem;
+      background: #f8f8fc;
+      border-radius: 1rem;
+      font-size: 0.75rem;
+      border-left: 2px solid #ccc;
+    }
+    .final-title {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+    .req-table {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-top: 0.5rem;
+    }
+    .req-item {
+      background: white;
+      padding: 0.2rem 0.6rem;
+      border-radius: 2rem;
+      border: 1px solid #eee;
+      font-size: 0.7rem;
+    }
+    .req-grade {
+      font-weight: 600;
+      margin-right: 0.3rem;
+    }
+    .req-score {
+      font-family: monospace;
+    }
+    .impossible {
+      color: #b33;
+    }
+    .zero {
+      color: #3a6;
+    }
   </style>
 </head>
 <body>
 
-  <!-- start overlay -->
   <div id="startOverlay" class="start-overlay">
     <div class="start-title">Calculy</div>
     <div class="start-subtitle">Calculate how much you need in your final</div>
     <button id="startBtn" class="start-button">Start.</button>
   </div>
 
-  <!-- grade calc -->
   <div id="mainContent" class="main-content hidden">
     <div class="container">
       <header class="header">
         <div class="logo">/calculy</div>  
         <nav class="nav">
-          <a href="#">feedback</a>
+          <a href="#"></a>
         </nav>
       </header>
 
-      <div class="calculator-container" id="app">
-
-      </div>
+      <div class="calculator-container" id="app"></div>
 
       <footer class="footer">
-        <div class="footer-links">
-          <a href=></a>
+        <div class="footer-center">
+          <div class="footer-credit">Created by <a href="https://www.linkedin.com/in/omar-garir/" target="_blank" class="footer-link">Omar Garir</a></div>
+          <div class="footer-social">
+            <a href="https://www.linkedin.com/in/omar-garir/" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="https://github.com/wispoflife" target="_blank" aria-label="GitHub"><i class="fab fa-github"></i></a>
+          </div>
         </div>
-        <p class="copyright">automatically calculates weighted grades</p>
+        <p class="copyright"></p>
       </footer>
-    </div>
-  </div>
 
   <script>
-    
     let subjects = [];
 
     function uid() {
       return Date.now() + '-' + Math.random().toString(36).substr(2, 6);
     }
 
-    
     const multiInstanceTypes = ['Lab Test', 'Lab Tasks', 'Quiz', 'Assignment', 'Inclass Assignment'];
     const singleInstanceTypes = ['Project', 'Midterm'];
 
@@ -67,67 +101,65 @@
       'Inclass Assignment': { defaultMax: 20 }
     };
 
+    const gradeBoundaries = [
+      { letter: "A+", min: 94 },
+      { letter: "A",  min: 90 },
+      { letter: "A-", min: 86 },
+      { letter: "B+", min: 82 },
+      { letter: "B",  min: 78 },
+      { letter: "B-", min: 74 },
+      { letter: "C+", min: 70 },
+      { letter: "C",  min: 65 },
+      { letter: "C-", min: 60 },
+      { letter: "D+", min: 55 },
+      { letter: "D",  min: 50 }
+    ];
+
     function createEmptySubject() {
-      return {
-        id: uid(),
-        name: '',
-        components: []
-      };
+      return { id: uid(), name: '', components: [] };
     }
 
     function createComponent(type) {
       const meta = typesMeta[type];
       const isMulti = multiInstanceTypes.includes(type);
-      
       if (isMulti) {
         return {
-          id: uid(),
-          type: type,
-          weight: 0,
-          bestY: null,
-          bestX: null,
+          id: uid(), type, weight: 0,
+          bestY: null, bestX: null,
           instances: [{ id: uid(), score: 0, max: meta.defaultMax }]
         };
       } else {
         return {
-          id: uid(),
-          type: type,
-          weight: 0,
-          score: 0,
-          maxPoints: meta.defaultMax
+          id: uid(), type, weight: 0,
+          score: 0, maxPoints: meta.defaultMax
         };
       }
     }
 
     function computeComponentGrade(comp) {
       const isMulti = multiInstanceTypes.includes(comp.type);
-      
       if (!isMulti) {
-        // single instance
         if (comp.maxPoints === 0) return 0;
         return (comp.score / comp.maxPoints) * 100;
       } else {
-        // multiple instances
         let percentages = comp.instances.map(inst => {
           if (inst.max === 0) return 0;
           return (inst.score / inst.max) * 100;
         });
-        
         if (comp.bestY && comp.bestX && comp.bestY > 0 && comp.bestX >= comp.bestY) {
-          const sorted = [...percentages].sort((a, b) => b - a);
+          const sorted = [...percentages].sort((a,b) => b - a);
           const top = sorted.slice(0, comp.bestY);
           if (top.length === 0) return 0;
-          return top.reduce((a, b) => a + b, 0) / top.length;
+          return top.reduce((a,b) => a + b, 0) / top.length;
         } else {
           if (percentages.length === 0) return 0;
-          return percentages.reduce((a, b) => a + b, 0) / percentages.length;
+          return percentages.reduce((a,b) => a + b, 0) / percentages.length;
         }
       }
     }
 
     function computeSubjectGrade(subject) {
-      let total = 0;
-      let totalWeight = 0;
+      let total = 0, totalWeight = 0;
       for (let comp of subject.components) {
         const grade = computeComponentGrade(comp);
         total += grade * (comp.weight / 100);
@@ -137,20 +169,46 @@
       return (total / totalWeight) * 100;
     }
 
-    // local cache
+    function calculateFinalRequirements(subject) {
+      let totalWeight = 0;
+      let weightedSum = 0;
+      for (let comp of subject.components) {
+        const grade = computeComponentGrade(comp);
+        weightedSum += grade * (comp.weight / 100);
+        totalWeight += comp.weight;
+      }
+      const remainingWeight = 100 - totalWeight;
+      if (remainingWeight <= 0.01) return null;
+      
+      const requiredScores = [];
+      for (let grade of gradeBoundaries) {
+        const target = grade.min;
+        const required = (target - (weightedSum / (totalWeight / 100))) * (totalWeight / remainingWeight);
+        let display, className;
+        if (required > 100) {
+          display = '-';
+          className = 'impossible';
+        } else if (required < 0) {
+          display = '0';
+          className = 'zero';
+        } else {
+          display = required.toFixed(1);
+          className = '';
+        }
+        requiredScores.push({ grade: grade.letter, needed: display, className });
+      }
+      return { remainingWeight, requiredScores };
+    }
+
     function saveToLocalStorage() {
       localStorage.setItem('calculy_subjects', JSON.stringify(subjects));
     }
 
     function loadFromLocalStorage() {
       const saved = localStorage.getItem('calculy_subjects');
-      if (saved) {
-        return JSON.parse(saved);
-      }
-      return null;
+      return saved ? JSON.parse(saved) : null;
     }
 
-    // render ui
     function renderApp() {
       const container = document.getElementById('app');
       if (!container) return;
@@ -161,7 +219,6 @@
         card.className = 'subject-card';
         card.dataset.id = subject.id;
 
-        // header
         const headerDiv = document.createElement('div');
         headerDiv.className = 'subject-header';
         const nameInput = document.createElement('input');
@@ -184,7 +241,6 @@
         headerDiv.appendChild(removeBtn);
         card.appendChild(headerDiv);
 
-        // components list
         const compList = document.createElement('div');
         compList.className = 'components-list';
         
@@ -210,8 +266,6 @@
           innerHeader.appendChild(weightInput);
           
           const isMulti = multiInstanceTypes.includes(comp.type);
-          
-          
           if (isMulti) {
             const bestDiv = document.createElement('div');
             bestDiv.className = 'best-rule';
@@ -241,7 +295,6 @@
           instancesArea.className = 'instances-area';
           
           if (isMulti) {
-            // multiple instances
             comp.instances.forEach((inst, idxInst) => {
               const row = document.createElement('div');
               row.className = 'instance-row';
@@ -281,7 +334,6 @@
             });
             instancesArea.appendChild(addInstBtn);
           } else {
-            // single instance
             const row = document.createElement('div');
             row.className = 'instance-row';
             row.innerHTML = `
@@ -304,7 +356,6 @@
           }
           compDiv.appendChild(instancesArea);
           
-          // remove component button
           const actions = document.createElement('div');
           actions.className = 'component-actions';
           const rmComp = document.createElement('button');
@@ -323,7 +374,7 @@
         const addCompDiv = document.createElement('div');
         addCompDiv.style.margin = '0.8rem 0';
         const typeSelect = document.createElement('select');
-        typeSelect.className = 'component-type-select';  // styled class
+        typeSelect.className = 'component-type-select';
         const allTypes = [...singleInstanceTypes, ...multiInstanceTypes];
         allTypes.forEach(opt => {
           const option = document.createElement('option');
@@ -345,51 +396,62 @@
         addCompDiv.appendChild(addCompBtn);
         card.appendChild(addCompDiv);
         
-        // grade display
-        const grade = computeSubjectGrade(subject);
-        const totalWeightSum = subject.components.reduce((sum, c) => sum + c.weight, 0);
-        const gradeDisplay = document.createElement('div');
-        gradeDisplay.className = 'grade-display';
-        gradeDisplay.innerHTML = `<strong>Grade: ${grade.toFixed(2)}%</strong> 
-          <span style="font-size:0.75rem; margin-left:1rem;">weights sum: ${totalWeightSum}%</span>`;
-        if (Math.abs(totalWeightSum - 100) > 0.01 && totalWeightSum > 0) {
-          const warn = document.createElement('div');
-          warn.className = 'warning';
-          warn.innerText = 'total weight for this subject is not 100% – grade may be inaccurate.';
-          gradeDisplay.appendChild(warn);
+        // const grade = computeSubjectGrade(subject);
+        // const totalWeightSum = subject.components.reduce((sum, c) => sum + c.weight, 0);
+        // const gradeDisplay = document.createElement('div');
+        // gradeDisplay.className = 'grade-display';
+        // gradeDisplay.innerHTML = `<strong>Grade: ${grade.toFixed(2)}%</strong> 
+        //   <span style="font-size:0.75rem; margin-left:1rem;">weights sum: ${totalWeightSum}%</span>`;
+        // if (Math.abs(totalWeightSum - 100) > 0.01 && totalWeightSum > 0) {
+        //   const warn = document.createElement('div');
+        //   warn.className = 'warning';
+        //   warn.innerText = 'total weight for this subject is not 100% – grade may be inaccurate.';
+        //   gradeDisplay.appendChild(warn);
+        // }
+        // card.appendChild(gradeDisplay);
+        
+        const req = calculateFinalRequirements(subject);
+        if (req) {
+          const reqDiv = document.createElement('div');
+          reqDiv.className = 'final-requirements';
+          const title = document.createElement('div');
+          title.className = 'final-title';
+          title.innerHTML = `Final exam needed (remaining weight: ${req.remainingWeight}%)`;
+          reqDiv.appendChild(title);
+          const tableDiv = document.createElement('div');
+          tableDiv.className = 'req-table';
+          req.requiredScores.forEach(r => {
+            const item = document.createElement('div');
+            item.className = 'req-item';
+            item.innerHTML = `<span class="req-grade">${r.grade}:</span> <span class="req-score ${r.className}">${r.needed}%</span>`;
+            tableDiv.appendChild(item);
+          });
+          reqDiv.appendChild(tableDiv);
+          card.appendChild(reqDiv);
         }
-        card.appendChild(gradeDisplay);
+        
         container.appendChild(card);
       });
       
-      // add subject button
       const addSubjectBtn = document.createElement('button');
       addSubjectBtn.innerText = '+ add subject';
       addSubjectBtn.className = 'add-subject-btn';
       addSubjectBtn.addEventListener('click', () => {
-        const newSubj = createEmptySubject();
-        subjects.push(newSubj);
+        subjects.push(createEmptySubject());
         renderApp();
       });
       container.appendChild(addSubjectBtn);
       
-      // Save to localStorage after every render
       saveToLocalStorage();
     }
 
-    // start overlay with persistence
     const overlay = document.getElementById('startOverlay');
     const mainContent = document.getElementById('mainContent');
     const startBtn = document.getElementById('startBtn');
     
     startBtn.addEventListener('click', () => {
-      // Load saved subjects from localStorage (if any) before showing main content
-      const savedSubjects = loadFromLocalStorage();
-      if (savedSubjects && Array.isArray(savedSubjects)) {
-        subjects = savedSubjects;
-      } else {
-        subjects = [];
-      }
+      const saved = loadFromLocalStorage();
+      subjects = (saved && Array.isArray(saved)) ? saved : [];
       
       overlay.classList.add('slide-down');
       setTimeout(() => {
