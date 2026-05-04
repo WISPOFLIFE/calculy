@@ -292,6 +292,13 @@
             renderApp();
           });
           innerHeader.appendChild(typeSpan);
+          const weightLabel = document.createElement('span');
+          weightLabel.textContent = 'Weight:';
+          weightLabel.style.fontSize = '0.75rem';
+          weightLabel.style.color = '#555';
+          weightLabel.style.marginLeft = '0.5rem';
+          innerHeader.appendChild(weightLabel);
+          innerHeader.appendChild(weightLabel);
           innerHeader.appendChild(weightInput);
           
           const isMulti = multiInstanceTypes.includes(comp.type);
