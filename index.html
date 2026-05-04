@@ -243,12 +243,22 @@
           subject.name = e.target.value;
           renderApp();
         });
+        const weightWrapper = document.createElement('div');
+        weightWrapper.style.display = 'flex';
+        weightWrapper.style.alignItems = 'center';
+        weightWrapper.style.gap = '0.3rem';
+
+        const finalWeightLabel = document.createElement('span');
+        finalWeightLabel.textContent = 'Final weight:';
+        finalWeightLabel.style.fontSize = '0.75rem';
+        finalWeightLabel.style.color = '#555';
+
         const finalWeightInput = document.createElement('input');
         finalWeightInput.type = 'number';
         finalWeightInput.step = '1';
         finalWeightInput.value = subject.finalWeight;
-        finalWeightInput.placeholder = 'Final %';
-        finalWeightInput.style.width = '90px';
+        finalWeightInput.placeholder = '';
+        finalWeightInput.style.width = '80px';
         finalWeightInput.style.padding = '0.3rem 0.5rem';
         finalWeightInput.style.border = '1px solid #ddd';
         finalWeightInput.style.borderRadius = '2rem';
@@ -258,7 +268,10 @@
           subject.finalWeight = parseFloat(e.target.value) || 0;
           renderApp();
         });
-        headerDiv.appendChild(finalWeightInput);
+
+        weightWrapper.appendChild(finalWeightLabel);
+        weightWrapper.appendChild(finalWeightInput);
+        headerDiv.appendChild(weightWrapper);
         const removeBtn = document.createElement('button');
         removeBtn.innerHTML = '✕';
         removeBtn.className = 'remove-subject';
@@ -297,7 +310,6 @@
           weightLabel.style.fontSize = '0.75rem';
           weightLabel.style.color = '#555';
           weightLabel.style.marginLeft = '0.5rem';
-          innerHeader.appendChild(weightLabel);
           innerHeader.appendChild(weightLabel);
           innerHeader.appendChild(weightInput);
           

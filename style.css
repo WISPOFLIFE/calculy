@@ -15,13 +15,15 @@ body {
 body::before {
   content: '';
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
   z-index: -2;
-  background: radial-gradient(circle at 30% 40%, rgba(210, 210, 250, 0.5), rgba(230, 240, 255, 0.1) 80%);
-  animation: softShift 12s ease-in-out infinite alternate;
+  background: radial-gradient(circle at 30% 40%, 
+    rgba(210, 210, 250, 0.6), 
+    rgba(230, 240, 255, 0.2) 80%);
+  animation: softShift 20s ease-in-out infinite alternate;
   pointer-events: none;
 }
 
@@ -331,7 +333,7 @@ h1 {
   }
 }
 
-/* START OVERLAY & SLIDE EFFECTS */
+
 .start-overlay {
   position: fixed;
   top: 0;
@@ -442,7 +444,6 @@ h1 {
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 1rem;
       margin-bottom: 1.5rem;
       padding-bottom: 0.75rem;
       border-bottom: 1px solid #f0f0f0;
