@@ -116,8 +116,13 @@
     ];
 
     function createEmptySubject() {
-      return { id: uid(), name: '', components: [] };
-    }
+  return { 
+    id: uid(), 
+    name: '', 
+    finalWeight: 40,   
+    components: [] 
+  };
+}
 
     function createComponent(type) {
       const meta = typesMeta[type];
@@ -158,47 +163,55 @@
       }
     }
 
-    function computeSubjectGrade(subject) {
-      let total = 0, totalWeight = 0;
-      for (let comp of subject.components) {
-        const grade = computeComponentGrade(comp);
-        total += grade * (comp.weight / 100);
-        totalWeight += comp.weight;
-      }
-      if (totalWeight === 0) return 0;
-      return (total / totalWeight) * 100;
-    }
-
-        function calculateFinalRequirements(subject) {
-      let totalWeight = 0;
-      let weightedSum = 0;
-      for (let comp of subject.components) {
-        const grade = computeComponentGrade(comp);
-        weightedSum += grade * (comp.weight / 100);
-        totalWeight += comp.weight;
-      }
-      const remainingWeight = 100 - totalWeight;
-      if (remainingWeight <= 0.01) return null;
-      
-      const requiredScores = [];
-      for (let grade of gradeBoundaries) {
-        const target = grade.min;
-        const required = (target - weightedSum) * (100 / remainingWeight);
-        let display, className;
-        if (required > 100) {
-          display = '-';
-          className = 'impossible';
-        } else if (required < 0) {
-          display = '0';
-          className = 'zero';
-        } else {
-          display = required.toFixed(1);
-          className = '';
+      function computeSubjectGrade(subject) {
+        let total = 0;
+        let componentWeightSum = 0;
+        for (let comp of subject.components) {
+          const grade = computeComponentGrade(comp);
+          total += grade * comp.weight;
+          componentWeightSum += comp.weight;
         }
-        requiredScores.push({ grade: grade.letter, needed: display, className });
+
+        const finalWeight = subject.finalWeight || 0;
+        const totalWeight = componentWeightSum + finalWeight;
+        if (totalWeight === 0) return 0;
+        return total / totalWeight;
       }
-      return { remainingWeight, requiredScores };
-    }
+
+      function calculateFinalRequirements(subject) {
+        const finalWeight = subject.finalWeight;
+        if (finalWeight <= 0) return null;
+        
+        let totalWeight = 0;
+        let weightedSum = 0;
+        for (let comp of subject.components) {
+          const grade = computeComponentGrade(comp);
+          weightedSum += grade * comp.weight;
+          totalWeight += comp.weight;
+        }
+        
+        const currentOverall = totalWeight === 0 ? 0 : weightedSum / totalWeight;
+        
+        const requiredScores = [];
+        for (let grade of gradeBoundaries) {
+          const target = grade.min;
+
+          const required = (target - currentOverall * (totalWeight / 100)) * (100 / finalWeight);
+          let display, className;
+          if (required > 100) {
+            display = '-';
+            className = 'impossible';
+          } else if (required < 0) {
+            display = '0';
+            className = 'zero';
+          } else {
+            display = required.toFixed(1);
+            className = '';
+          }
+          requiredScores.push({ grade: grade.letter, needed: display, className });
+        }
+        return { finalWeight, requiredScores };
+      }
 
     function saveToLocalStorage() {
       localStorage.setItem('calculy_subjects', JSON.stringify(subjects));
@@ -230,6 +243,22 @@
           subject.name = e.target.value;
           renderApp();
         });
+        const finalWeightInput = document.createElement('input');
+        finalWeightInput.type = 'number';
+        finalWeightInput.step = '1';
+        finalWeightInput.value = subject.finalWeight;
+        finalWeightInput.placeholder = 'Final %';
+        finalWeightInput.style.width = '90px';
+        finalWeightInput.style.padding = '0.3rem 0.5rem';
+        finalWeightInput.style.border = '1px solid #ddd';
+        finalWeightInput.style.borderRadius = '2rem';
+        finalWeightInput.style.fontFamily = 'inherit';
+        finalWeightInput.style.textAlign = 'center';
+        finalWeightInput.addEventListener('change', (e) => {
+          subject.finalWeight = parseFloat(e.target.value) || 0;
+          renderApp();
+        });
+        headerDiv.appendChild(finalWeightInput);
         const removeBtn = document.createElement('button');
         removeBtn.innerHTML = '✕';
         removeBtn.className = 'remove-subject';
@@ -396,27 +425,19 @@
         addCompDiv.appendChild(addCompBtn);
         card.appendChild(addCompDiv);
         
-        // const grade = computeSubjectGrade(subject);
-        // const totalWeightSum = subject.components.reduce((sum, c) => sum + c.weight, 0);
-        // const gradeDisplay = document.createElement('div');
-        // gradeDisplay.className = 'grade-display';
-        // gradeDisplay.innerHTML = `<strong>Grade: ${grade.toFixed(2)}%</strong> 
-        //   <span style="font-size:0.75rem; margin-left:1rem;">weights sum: ${totalWeightSum}%</span>`;
-        // if (Math.abs(totalWeightSum - 100) > 0.01 && totalWeightSum > 0) {
-        //   const warn = document.createElement('div');
-        //   warn.className = 'warning';
-        //   warn.innerText = 'total weight for this subject is not 100% – grade may be inaccurate.';
-        //   gradeDisplay.appendChild(warn);
-        // }
-        // card.appendChild(gradeDisplay);
-        
+        const grade = computeSubjectGrade(subject);
+        const gradeDisplay = document.createElement('div');
+        gradeDisplay.className = 'grade-display';
+        gradeDisplay.innerHTML = `<strong>Current grade: ${grade.toFixed(2)}%</strong>`;
+        card.appendChild(gradeDisplay);
+                
         const req = calculateFinalRequirements(subject);
         if (req) {
           const reqDiv = document.createElement('div');
           reqDiv.className = 'final-requirements';
           const title = document.createElement('div');
           title.className = 'final-title';
-          title.innerHTML = `Final exam needed (remaining weight: ${req.remainingWeight}%)`;
+          title.innerHTML = `Final exam needed (final weight: ${req.finalWeight}%)`;
           reqDiv.appendChild(title);
           const tableDiv = document.createElement('div');
           tableDiv.className = 'req-table';
